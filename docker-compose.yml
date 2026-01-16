@@ -1,0 +1,49 @@
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    container_name: pytelos-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pytelos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pytelos_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-pytelos}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - pytelos_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pytelos}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - pytelos_network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pytelos-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@pytelos.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "${PGADMIN_PORT:-5051}:80"
+    volumes:
+      - pytelos_pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - pytelos_network
+
+volumes:
+  pytelos_pg_data:
+    driver: local
+  pytelos_pgadmin_data:
+    driver: local
+
+networks:
+  pytelos_network:
+    driver: bridge
