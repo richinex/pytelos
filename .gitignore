@@ -57,11 +57,9 @@ htmlcov/
 .ruff_cache/
 .hypothesis/
 
-# Personal notes
-notes.txt
-
-# Backup files
-*.bak
-
 # Docker
 docker-compose.override.yml
+
+docs/
+*.txt
+.claude
