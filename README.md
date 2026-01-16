@@ -1,6 +1,6 @@
 # Pytelos
 
-A modular codebase indexer with semantic search and RAG (Retrieval-Augmented Generation) capabilities. Index your code and documents, search with natural language, and get intelligent answers through multi-step reasoning.
+A file indexer with semantic search and RAG (Retrieval-Augmented Generation) capabilities. Index your code and documents, search with natural language, and get intelligent answers through multi-step reasoning. I built PyTelos to explore the effectiveness of pgvector and textsearch extensions in RAG applications.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -23,7 +23,7 @@ Pytelos lets you:
 ### Prerequisites
 
 - Python 3.11 or higher
-- PostgreSQL with [pgvector](https://github.com/pgvector/pgvector) extension
+- PostgreSQL 17+ with [pgvector](https://github.com/pgvector/pgvector) and [pg_textsearch](https://github.com/timescale/pg_textsearch) extensions
 - API key for at least one LLM provider (OpenAI, DeepSeek, Anthropic, or Google Gemini)
 
 ### Install with uv
@@ -39,21 +39,23 @@ uv sync
 
 ### Database Setup
 
-Pytelos requires PostgreSQL with the pgvector extension for vector storage and search.
+Pytelos requires PostgreSQL with pgvector (vector search) and pg_textsearch (BM25) extensions.
 
 ```bash
-# Using Docker (recommended for development)
-docker run -d \
-  --name pytelos-db \
-  -e POSTGRES_USER=pytelos \
-  -e POSTGRES_PASSWORD=pytelos_dev \
-  -e POSTGRES_DB=pytelos \
-  -p 5433:5432 \
-  pgvector/pgvector:pg16
+# Using Docker Compose (recommended)
+docker compose up -d
 
 # Initialize the database schema
 uv run pytelos init
 ```
+
+This starts PostgreSQL 17 with both extensions pre-configured, plus pgAdmin for database management.
+
+**Services:**
+| Service | Port | Description |
+|---------|------|-------------|
+| PostgreSQL | 5433 | Database with pgvector + pg_textsearch |
+| pgAdmin | 5051 | Database management UI |
 
 ## Configuration
 
@@ -156,12 +158,12 @@ uv run pytelos tui
 
 ## Architecture
 
-Pytelos follows [Parnas's information hiding principles](https://www.win.tue.nl/~wstomv/edu/2ip30/references/criteria_for_modularization.pdf) - each module encapsulates specific design decisions behind clean abstractions.
+Pytelos follows [Parnas's information hiding principles](https://www.win.tue.nl/~wstomv/edu/2ip30/references/criteria_for_modularization.pdf): each module encapsulates specific design decisions behind clean abstractions.
 
 ```
 src/pytelos/
-├── storage/          # PostgreSQL + pgvector backend
-│                     # HNSW/IVFFlat vector indexes, BM25 text search
+├── storage/          # PostgreSQL backend
+│                     # pgvector (HNSW/IVFFlat), pg_textsearch (BM25)
 ├── embedding/        # Embedding provider abstraction
 │                     # Currently: OpenAI (text-embedding-3-small/large)
 ├── search/           # Hybrid search engine
@@ -187,7 +189,7 @@ src/pytelos/
 | Mode | Description |
 |------|-------------|
 | **Vector** | Cosine similarity search using 1536-dimensional embeddings |
-| **Keyword** | BM25 full-text search via PostgreSQL tsvector |
+| **Keyword** | BM25 full-text search via pg_textsearch |
 | **Hybrid** | Reciprocal Rank Fusion (RRF) combining both approaches |
 
 ### Reasoning Agent
