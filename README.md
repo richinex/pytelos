@@ -129,6 +129,8 @@ uv run pytelos clear
 
 ### Terminal UI
 
+![Pytelos TUI](images/tui.png)
+
 The TUI provides an interactive interface with:
 
 - Real-time streaming of LLM responses
